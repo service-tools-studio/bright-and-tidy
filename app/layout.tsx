@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Allura, Fraunces, Nunito_Sans } from "next/font/google";
+import { CallNowBar } from "@/app/components/call-now-bar";
 import { site } from "@/app/lib/site";
 import "./globals.css";
 
@@ -34,7 +35,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       data-scroll-behavior="smooth"
       className={`${nunito.variable} ${fraunces.variable} ${allura.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans pb-24">
+        {children}
+        <CallNowBar />
+      </body>
     </html>
   );
 }

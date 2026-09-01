@@ -1,31 +1,54 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { CloseIcon, MenuIcon } from "@/app/components/icons";
 import { Logo } from "@/app/components/logo";
 
 const links = [
   { href: "/#services", label: "Services" },
+  { href: "/#process", label: "Our Process" },
   { href: "/#about", label: "About" },
   { href: "/quote", label: "Get a Quote" },
 ];
 
+function scrollToHash(href: string) {
+  const hash = href.includes("#") ? href.slice(href.indexOf("#") + 1) : "";
+  if (!hash) return;
+
+  requestAnimationFrame(() => {
+    document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" });
+  });
+}
+
 export function Header() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <header className="relative z-30 flex items-start justify-between px-5 pt-5 sm:px-8 lg:px-12">
-      <Link href="/" className="inline-flex rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink">
+      <Link
+        href="/"
+        aria-label="Bright & Tidy Cleaning home"
+        className="fixed top-5 left-5 z-40 inline-flex rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink sm:left-8 lg:left-12"
+        onClick={() => {
+          if (pathname === "/") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+        }}
+      >
         <Logo className="h-28 w-28 sm:h-32 sm:w-32" />
       </Link>
+      <div className="h-28 w-28 sm:h-32 sm:w-32" aria-hidden />
 
-      <nav className="hidden items-center gap-8 pt-3 md:flex">
+      <nav className="fixed top-8 right-5 z-40 hidden items-center gap-8 sm:right-8 md:flex lg:right-12">
         {links.map((link) => (
           <Link
             key={link.href}
             href={link.href}
             className="text-sm font-semibold tracking-wide text-ink/80 transition-colors hover:text-ink"
+            onClick={() => scrollToHash(link.href)}
           >
             {link.label}
           </Link>
@@ -53,7 +76,10 @@ export function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  setOpen(false);
+                  scrollToHash(link.href);
+                }}
                 className="rounded-2xl px-4 py-3 text-base font-semibold text-ink hover:bg-cream"
               >
                 {link.label}

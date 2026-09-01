@@ -104,7 +104,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="services" className="bg-[#fffdf8] px-5 py-16 sm:px-8 lg:px-12 lg:py-20">
+      <section id="services" className="scroll-mt-32 bg-[#fffdf8] px-5 py-16 sm:px-8 lg:px-12 lg:py-20">
         <div className="mx-auto max-w-6xl">
           <div className="mb-10 text-center">
             <SparkleIcon className="mx-auto mb-3 h-6 w-6 text-sun-deep" />
@@ -132,24 +132,73 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="about" className="bg-[#fffdf8] px-5 pb-16 sm:px-8 lg:px-12">
+      <section id="about" className="scroll-mt-32 bg-[#fffdf8] px-5 pb-16 sm:px-8 lg:px-12">
         <div className="mx-auto grid max-w-6xl items-center gap-8 rounded-[2rem] bg-mint px-7 py-10 sm:px-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-14 lg:py-14">
           <div>
             <SparkleIcon className="mb-4 h-6 w-6 text-sun-deep" />
             <h2 className="font-serif text-3xl leading-tight font-semibold sm:text-4xl">
-              Meticulous cleaning.{" "}
-              <span className="text-ink">Thoughtful</span> service.
+              A local cleaning company you can count on.
             </h2>
           </div>
           <div>
             <p className="text-lg leading-8 text-muted">
-              We treat your space with the care it deserves and deliver results
-              that make you feel at home.
+              Bright & Tidy Cleaning is a locally owned Portland cleaning
+              company built around a simple idea: getting your home
+              professionally cleaned should be easy, dependable, and leave you
+              feeling great about your space.
             </p>
             <p className="script-underline font-script mt-5 inline-block pb-2 text-[2rem] leading-none text-ink">
               Let us do the dirty work.
             </p>
           </div>
+        </div>
+      </section>
+
+      <section id="process" className="scroll-mt-32 bg-[#fffdf8] px-5 pb-16 sm:px-8 lg:px-12">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-10 text-center">
+            <SparkleIcon className="mx-auto mb-3 h-6 w-6 text-sun-deep" />
+            <h2 className="font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
+              A clean home in three easy steps.
+            </h2>
+          </div>
+
+          <ol className="grid gap-5 md:grid-cols-3">
+            {[
+              {
+                step: "1",
+                title: "Tell us about your space",
+                description: "Request a free quote online or call/text us.",
+              },
+              {
+                step: "2",
+                title: "Choose your cleaning time",
+                description: "We'll confirm your price and availability.",
+              },
+              {
+                step: "3",
+                title: "Come home to clean",
+                description: "We'll take care of the dirty work.",
+                sparkle: true,
+              },
+            ].map((item) => (
+              <li
+                key={item.step}
+                className="rounded-[1.6rem] bg-white px-6 py-7 shadow-[0_10px_30px_rgba(47,47,47,0.06)] ring-1 ring-ink/5"
+              >
+                <span className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-sun font-serif text-xl font-semibold text-ink">
+                  {item.step}
+                </span>
+                <h3 className="flex items-center gap-2 font-serif text-xl font-semibold">
+                  {item.title}
+                  {item.sparkle ? <SparkleIcon className="h-5 w-5 text-gold" /> : null}
+                </h3>
+                <p className="mt-2 text-[0.95rem] leading-6 text-muted">
+                  {item.description}
+                </p>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
