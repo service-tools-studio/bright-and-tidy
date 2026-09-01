@@ -3,24 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { HashLink } from "@/app/components/hash-link";
 import { CloseIcon, MenuIcon } from "@/app/components/icons";
 import { Logo } from "@/app/components/logo";
 
 const links = [
   { href: "/#services", label: "Services" },
+  { href: "/#pricing", label: "Pricing" },
   { href: "/#process", label: "Our Process" },
   { href: "/#about", label: "About" },
+  { href: "/#faq", label: "FAQ" },
   { href: "/quote", label: "Get a Quote" },
 ];
-
-function scrollToHash(href: string) {
-  const hash = href.includes("#") ? href.slice(href.indexOf("#") + 1) : "";
-  if (!hash) return;
-
-  requestAnimationFrame(() => {
-    document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" });
-  });
-}
 
 export function Header() {
   const [open, setOpen] = useState(false);
@@ -42,16 +36,15 @@ export function Header() {
       </Link>
       <div className="h-28 w-28 sm:h-32 sm:w-32" aria-hidden />
 
-      <nav className="fixed top-8 right-5 z-40 hidden items-center gap-8 sm:right-8 md:flex lg:right-12">
+      <nav className="fixed top-8 right-5 z-40 hidden items-center gap-5 sm:right-8 md:flex lg:right-12 lg:gap-8">
         {links.map((link) => (
-          <Link
+          <HashLink
             key={link.href}
             href={link.href}
             className="text-sm font-semibold tracking-wide text-ink/80 transition-colors hover:text-ink"
-            onClick={() => scrollToHash(link.href)}
           >
             {link.label}
-          </Link>
+          </HashLink>
         ))}
       </nav>
 
@@ -73,17 +66,14 @@ export function Header() {
         >
           <nav className="flex flex-col gap-1">
             {links.map((link) => (
-              <Link
+              <HashLink
                 key={link.href}
                 href={link.href}
-                onClick={() => {
-                  setOpen(false);
-                  scrollToHash(link.href);
-                }}
+                onClick={() => setOpen(false)}
                 className="rounded-2xl px-4 py-3 text-base font-semibold text-ink hover:bg-cream"
               >
                 {link.label}
-              </Link>
+              </HashLink>
             ))}
           </nav>
         </div>
