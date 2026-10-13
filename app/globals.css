@@ -11,6 +11,7 @@
   --color-sun: #ffde59;
   --color-sun-deep: #ffde59;
   --color-gold: #ffde59;
+  --color-gold-text: #8a6400;
   --color-ink: #545454;
   --color-cream: #faf6ec;
   --color-cream-deep: #f3ead8;
@@ -34,6 +35,17 @@ body {
 .sparkle-field {
   background-color: #ffde59;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cpath fill='%23ffe9a3' d='M40 28l4.2 12.4L56.6 44.6 44.2 49 40 61.4 35.8 49 23.4 44.6l12.4-4.2zM170 92l6 18L194 116l-18 6-6 18-6-18-18-6 18-6zM96 168l4.6 13.6L114.2 186 100.6 190.4 96 204l-4.6-13.6L77.8 186l13.6-4.4z'/%3E%3C/svg%3E");
+}
+
+.headline-brighter {
+  color: #ffde59;
+  -webkit-text-stroke: 1px #545454;
+  paint-order: stroke fill;
+  text-shadow:
+    -1px -1px 0 #545454,
+    1px -1px 0 #545454,
+    -1px 1px 0 #545454,
+    1px 1px 0 #545454;
 }
 
 .script-underline {

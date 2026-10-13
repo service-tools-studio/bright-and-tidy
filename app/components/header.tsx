@@ -36,12 +36,16 @@ export function Header() {
       </Link>
       <div className="h-28 w-28 sm:h-32 sm:w-32" aria-hidden />
 
+      <div
+        className="pointer-events-none fixed inset-x-0 top-0 z-[35] hidden h-[4.75rem] bg-cream/70 backdrop-blur-md md:block"
+        aria-hidden
+      />
       <nav className="fixed top-8 right-5 z-40 hidden items-center gap-5 sm:right-8 md:flex lg:right-12 lg:gap-8">
         {links.map((link) => (
           <HashLink
             key={link.href}
             href={link.href}
-            className="text-sm font-semibold tracking-wide text-ink/80 transition-colors hover:text-ink"
+            className="text-sm font-semibold tracking-wide text-ink/80 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
           >
             {link.label}
           </HashLink>
@@ -70,7 +74,7 @@ export function Header() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className="rounded-2xl px-4 py-3 text-base font-semibold text-ink hover:bg-cream"
+                className="rounded-2xl px-4 py-3 text-base font-semibold text-ink hover:bg-cream focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
                 {link.label}
               </HashLink>

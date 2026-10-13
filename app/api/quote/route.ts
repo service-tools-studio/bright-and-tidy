@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
-import { parseQuoteRequest } from "@/app/lib/quote";
+import {
+  buildCleaningLeadEmailBody,
+  buildCleaningLeadEmailSubject,
+  parseCleaningLeadPayload,
+} from "@/app/lib/quote";
+import {
+  checkRateLimit,
+  getClientIp,
+  isSubmitTimingValid,
+} from "@/app/lib/quote-guard";
 import { site } from "@/app/lib/site";
 
 export const runtime = "nodejs";
@@ -15,6 +24,15 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!checkRateLimit(getClientIp(request)).allowed) {
+    return NextResponse.json(
+      {
+        error: `Too many requests. Please try again later or call us at ${site.phoneDisplay}.`,
+      },
+      { status: 429 },
+    );
+  }
+
   let body: unknown;
 
   try {
@@ -23,10 +41,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
-  const quote = parseQuoteRequest(body);
+  const quote = parseCleaningLeadPayload(body);
 
   if (!quote) {
-    return NextResponse.json({ error: "Please fill out the required fields." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Please fill out the required fields." },
+      { status: 400 },
+    );
+  }
+
+  if (!isSubmitTimingValid(quote.formLoadedAt)) {
+    return NextResponse.json({ ok: true });
   }
 
   const transporter = nodemailer.createTransport({
@@ -39,23 +64,13 @@ export async function POST(request: Request) {
     },
   });
 
-  const details = quote.details || "No additional details provided.";
-
   try {
     await transporter.sendMail({
       from: `"${site.name}" <${site.quoteEmail}>`,
       to: site.quoteEmail,
       replyTo: quote.email,
-      subject: `New quote request from ${quote.name}`,
-      text: [
-        `Name: ${quote.name}`,
-        `Phone: ${quote.phone}`,
-        `Email: ${quote.email}`,
-        `Service: ${quote.service}`,
-        "",
-        "Details:",
-        details,
-      ].join("\n"),
+      subject: buildCleaningLeadEmailSubject(quote),
+      text: buildCleaningLeadEmailBody(quote),
     });
   } catch {
     return NextResponse.json(

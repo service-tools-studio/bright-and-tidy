@@ -13,6 +13,7 @@ import {
   ShieldIcon,
   SparkleIcon,
 } from "@/app/components/icons";
+import { formatPricingAmount, pricingListings } from "@/app/lib/pricing";
 import { site } from "@/app/lib/site";
 
 const highlights = [
@@ -42,12 +43,6 @@ const services = [
     description: "Turnover cleanings for rental units",
     icon: KeysIcon,
   },
-];
-
-const prices = [
-  { title: "Standard Cleaning", price: "$150" },
-  { title: "Deep Cleaning", price: "$250" },
-  { title: "Move-In / Move-Out Cleaning", price: "$300" },
 ];
 
 const faqs = [
@@ -89,9 +84,9 @@ const faqs = [
       "Not at all. You're welcome to be home, head out, or arrange a way for us to access your home while you're away. We'll work with whatever is most comfortable and convenient for you.",
   },
   {
-    question: "Are you insured?",
+    question: "Who will be in my home?",
     answer:
-      "Yes. Bright & Tidy Cleaning is fully insured, so you can feel comfortable having our team in your home.",
+      "Bright & Tidy Cleaning is a women-owned company, and we send vetted professionals into your home so you can feel comfortable having our team there.",
   },
   {
     question: "What areas do you serve?",
@@ -115,7 +110,7 @@ export default function Home() {
           <div className="grid grid-cols-[minmax(0,1.15fr)_minmax(7.5rem,0.9fr)] items-start gap-x-4 gap-y-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] sm:gap-x-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] lg:items-center lg:gap-8">
             <h1 className="relative z-10 col-span-2 font-serif text-[2.55rem] leading-[1.08] font-semibold tracking-tight text-ink sm:text-5xl lg:col-span-1 lg:col-start-1 lg:row-start-1 lg:text-[3.6rem]">
               Life feels{" "}
-              <em className="font-serif text-gold not-italic">brighter</em>
+              <em className="headline-brighter font-serif not-italic">brighter</em>
               <span className="mt-1 block">in a clean home.</span>
             </h1>
 
@@ -147,8 +142,8 @@ export default function Home() {
               </Link>
 
               <p className="mt-5 flex items-center gap-2 text-sm text-muted">
-                <ShieldIcon className="h-5 w-5 shrink-0 text-gold" />
-                Insured. Background-checked. Professional.
+                <ShieldIcon className="h-5 w-5 shrink-0 text-gold-text" />
+                Vetted professionals. Women-owned.
               </p>
             </div>
 
@@ -203,25 +198,58 @@ export default function Home() {
             </h2>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-3">
-            {prices.map((item) => (
+          <div className="mx-auto grid max-w-3xl gap-5">
+            {pricingListings.map((item) => (
               <article
                 key={item.title}
-                className="rounded-[1.6rem] bg-white px-6 py-8 text-center shadow-[0_10px_30px_rgba(47,47,47,0.06)] ring-1 ring-ink/5"
+                className="rounded-[1.6rem] bg-white px-6 py-7 shadow-[0_10px_30px_rgba(47,47,47,0.06)] ring-1 ring-ink/5 sm:px-8"
               >
                 <h3 className="font-serif text-xl font-semibold">{item.title}</h3>
-                <p className="mt-4 font-serif text-3xl font-semibold text-ink">
-                  <span className="block text-sm font-sans font-medium text-muted">
-                    Starting at
-                  </span>
-                  {item.price}
+                {item.subtitle ? (
+                  <p className="mt-0.5 text-sm font-medium text-muted">
+                    {item.subtitle}
+                  </p>
+                ) : null}
+
+                <div className="mt-5 overflow-hidden rounded-2xl border border-ink/10 bg-cream/40">
+                  {item.tiers.map((tier, index) => (
+                    <div
+                      key={tier.sqftLabel}
+                      className={`flex flex-col gap-0.5 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4 ${
+                        index > 0 ? "border-t border-ink/10" : ""
+                      }`}
+                    >
+                      <SqftTierLabel label={tier.sqftLabel} />
+                      <div className="flex flex-col sm:items-end">
+                        <span className="text-xs font-medium text-muted">
+                          Starting at
+                        </span>
+                        <span className="font-serif text-xl font-semibold text-ink">
+                          {formatPricingAmount(tier.startingAt)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="mt-3 text-xs leading-relaxed text-muted">
+                  <span className="font-semibold text-ink">
+                    {item.largeHomePrompt}
+                  </span>{" "}
+                  <Link
+                    href="/quote"
+                    className="font-semibold text-ink underline decoration-sun underline-offset-2 hover:text-ink/80"
+                  >
+                    Request a personalized quote →
+                  </Link>
                 </p>
               </article>
             ))}
           </div>
 
           <p className="mx-auto mt-8 max-w-2xl text-center text-[0.95rem] leading-7 text-muted">
-            Your exact price depends on the size and condition of your home.{" "}
+            Starting rates shown are for homes in light condition. Final pricing
+            depends on home size, condition, scope, and cleaning needs.{" "}
             <Link href="/quote" className="font-semibold text-ink underline decoration-sun underline-offset-2 hover:text-ink/80">
               Get a free personalized quote
             </Link>{" "}
@@ -289,7 +317,7 @@ export default function Home() {
                 </span>
                 <h3 className="flex items-center gap-2 font-serif text-xl font-semibold">
                   {item.title}
-                  {item.sparkle ? <SparkleIcon className="h-5 w-5 text-gold" /> : null}
+                  {item.sparkle ? <SparkleIcon className="h-5 w-5 text-gold-text" /> : null}
                 </h3>
                 <p className="mt-2 text-[0.95rem] leading-6 text-muted">
                   {item.description}
@@ -318,7 +346,7 @@ export default function Home() {
                 <summary className="cursor-pointer list-none font-serif text-xl font-semibold marker:content-none [&::-webkit-details-marker]:hidden">
                   <span className="flex items-start justify-between gap-4">
                     {faq.question}
-                    <span className="mt-1 shrink-0 text-lg font-sans font-semibold text-gold transition-transform group-open:rotate-45">
+                    <span className="mt-1 shrink-0 text-lg font-sans font-semibold text-gold-text transition-transform group-open:rotate-45">
                       +
                     </span>
                   </span>
@@ -355,5 +383,22 @@ export default function Home() {
       </section>
       <Footer />
     </div>
+  );
+}
+
+function SqftTierLabel({ label }: { label: string }) {
+  const match = label.match(/^(.*?)(\d[\d,]*)\s*(sq\s*ft)$/i);
+  if (!match) {
+    return <span className="text-sm text-muted">{label}</span>;
+  }
+
+  const [, prefix, amount, unit] = match;
+  return (
+    <span className="text-sm text-muted">
+      {prefix}
+      <span className="text-base font-semibold text-ink sm:text-lg">
+        {amount} {unit}
+      </span>
+    </span>
   );
 }
