@@ -14,6 +14,7 @@ const links = [
   { href: "/#about", label: "About" },
   { href: "/#faq", label: "FAQ" },
   { href: "/quote", label: "Get a Quote" },
+  { href: "/book-online", label: "Book Online" },
 ];
 
 export function Header() {
@@ -41,15 +42,22 @@ export function Header() {
         aria-hidden
       />
       <nav className="fixed top-8 right-5 z-40 hidden items-center gap-5 sm:right-8 md:flex lg:right-12 lg:gap-8">
-        {links.map((link) => (
-          <HashLink
-            key={link.href}
-            href={link.href}
-            className="text-sm font-semibold tracking-wide text-ink/80 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
-          >
-            {link.label}
-          </HashLink>
-        ))}
+        {links.map((link) => {
+          const isBookOnline = link.href === "/book-online";
+          return (
+            <HashLink
+              key={link.href}
+              href={link.href}
+              className={
+                isBookOnline
+                  ? "rounded-full bg-ink px-3.5 py-1.5 text-sm font-semibold tracking-wide text-cream transition-colors hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+                  : "text-sm font-semibold tracking-wide text-ink/80 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+              }
+            >
+              {link.label}
+            </HashLink>
+          );
+        })}
       </nav>
 
       <button
@@ -69,16 +77,23 @@ export function Header() {
           className="fixed right-5 top-20 z-40 w-[min(18rem,calc(100vw-2.5rem))] rounded-3xl bg-white p-5 shadow-xl ring-1 ring-ink/5 sm:right-8 md:hidden"
         >
           <nav className="flex flex-col gap-1">
-            {links.map((link) => (
-              <HashLink
-                key={link.href}
-                href={link.href}
-                onClick={() => setOpen(false)}
-                className="rounded-2xl px-4 py-3 text-base font-semibold text-ink hover:bg-cream focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-              >
-                {link.label}
-              </HashLink>
-            ))}
+            {links.map((link) => {
+              const isBookOnline = link.href === "/book-online";
+              return (
+                <HashLink
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className={
+                    isBookOnline
+                      ? "rounded-full bg-ink px-4 py-3 text-center text-base font-semibold text-cream hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                      : "rounded-2xl px-4 py-3 text-base font-semibold text-ink hover:bg-cream focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                  }
+                >
+                  {link.label}
+                </HashLink>
+              );
+            })}
           </nav>
         </div>
       ) : null}

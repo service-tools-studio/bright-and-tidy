@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { site } from "@/app/lib/site";
+import { buildBookingCalendlyUrl } from "@/app/lib/booking-calendly";
 import {
   BATHROOM_OPTIONS,
   BEDROOM_OPTIONS,
@@ -18,13 +18,14 @@ import {
   CONDITION_OPTIONS,
   CONTACT_OPTIONS,
   EMPTY_CLEANING_LEAD_FORM,
-  QUOTE_FORM_STEPS,
   TIMING_OPTIONS,
   type CleaningLeadFormState,
+  type CleaningLeadMode,
   type FieldErrors,
   fieldDomId,
   firstStepErrorField,
   formatPhoneInput,
+  getLeadFormSteps,
   validateCleaningLeadStep,
 } from "@/app/lib/quote";
 
@@ -48,11 +49,16 @@ const btnSecondary =
   `inline-flex min-h-11 items-center justify-center rounded-full border border-ink/20 bg-white px-6 py-2.5 text-sm font-extrabold uppercase tracking-wide text-ink transition hover:bg-cream ${focusRing}`;
 
 type Props = {
+  mode?: CleaningLeadMode;
   initialCleaningType?: string;
 };
 
-export function QuoteForm({ initialCleaningType }: Props) {
-  const steps = QUOTE_FORM_STEPS;
+export function QuoteForm({
+  mode = "quote",
+  initialCleaningType,
+}: Props) {
+  const isQuote = mode === "quote";
+  const steps = getLeadFormSteps(mode);
   const [form, setForm] = useState<CleaningLeadFormState>(() => ({
     ...EMPTY_CLEANING_LEAD_FORM,
     ...(initialCleaningType ? { cleaningType: initialCleaningType } : {}),
@@ -65,6 +71,8 @@ export function QuoteForm({ initialCleaningType }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submittedSnapshot, setSubmittedSnapshot] =
+    useState<CleaningLeadFormState | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [stepIndex, setStepIndex] = useState(0);
   const statusId = useId();
@@ -169,9 +177,9 @@ export function QuoteForm({ initialCleaningType }: Props) {
   }
 
   function advanceStep() {
-    const errors = validateCleaningLeadStep(form, stepIndex);
+    const errors = validateCleaningLeadStep(form, mode, stepIndex);
     setFieldErrors(errors);
-    const firstInvalid = firstStepErrorField(errors, stepIndex);
+    const firstInvalid = firstStepErrorField(errors, mode, stepIndex);
     if (firstInvalid) {
       focusField(firstInvalid);
       return false;
@@ -190,11 +198,17 @@ export function QuoteForm({ initialCleaningType }: Props) {
     const snapshot = { ...form };
 
     try {
+      const leadPath = isQuote ? "Personalized Quote" : "Book Online";
+      const calendlyUrl = buildBookingCalendlyUrl({
+        form: snapshot,
+        leadPath,
+      });
       const response = await fetch("/api/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...snapshot,
+          leadPath,
           formLoadedAt: formLoadedAtRef.current,
         }),
       });
@@ -203,6 +217,7 @@ export function QuoteForm({ initialCleaningType }: Props) {
         throw new Error(data.error ?? "Failed to send your request.");
       }
 
+      setSubmittedSnapshot(snapshot);
       setSubmitSuccess(true);
       setForm({
         ...EMPTY_CLEANING_LEAD_FORM,
@@ -210,6 +225,10 @@ export function QuoteForm({ initialCleaningType }: Props) {
       });
       setStepIndex(0);
       formLoadedAtRef.current = Date.now();
+
+      if (!isQuote) {
+        window.open(calendlyUrl, "_blank", "noopener,noreferrer");
+      }
     } catch (error) {
       setSubmitError(
         error instanceof Error
@@ -229,7 +248,47 @@ export function QuoteForm({ initialCleaningType }: Props) {
     await finishSubmit();
   }
 
+  function openCalendlyFromSuccess() {
+    if (!submittedSnapshot) return;
+    const url = buildBookingCalendlyUrl({
+      form: submittedSnapshot,
+      leadPath: isQuote ? "Personalized Quote" : "Book Online",
+    });
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
   if (submitSuccess) {
+    if (!isQuote) {
+      return (
+        <div
+          ref={successCardRef}
+          data-lead-wizard="booking"
+          className="rounded-[2rem] border border-ink/10 bg-white p-6 shadow-sm sm:p-8"
+        >
+          <div aria-live="polite">
+            <h2
+              ref={successHeadingRef}
+              tabIndex={-1}
+              className="font-serif text-2xl font-semibold text-ink outline-none"
+            >
+              You&apos;re all set — pick a time in the new tab.
+            </h2>
+            <p className="mt-3 text-base leading-relaxed text-muted">
+              We&apos;ve saved your details. If the scheduling tab didn&apos;t
+              open, use the button below.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={openCalendlyFromSuccess}
+            className={`${btnPrimary} mt-6 w-full sm:w-auto`}
+          >
+            See Available Times →
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div
         ref={successCardRef}
@@ -249,9 +308,24 @@ export function QuoteForm({ initialCleaningType }: Props) {
             team will be in touch within 1–2 business hours.
           </p>
         </div>
-        <a href={site.phoneHref} className={`${btnPrimary} mt-6 inline-flex`}>
-          Call {site.phoneDisplay}
-        </a>
+
+        <div className="mt-8 rounded-2xl border border-sun bg-sun/30 px-5 py-5">
+          <h3 className="font-serif text-lg font-semibold text-ink">
+            Want to reserve a cleaning time now?
+          </h3>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            You don&apos;t have to wait for your estimate to reserve a spot.
+            We&apos;ll still confirm your final price with you before cleaning
+            begins.
+          </p>
+          <button
+            type="button"
+            onClick={openCalendlyFromSuccess}
+            className={`${btnPrimary} mt-4 w-full sm:w-auto`}
+          >
+            Reserve your cleaning →
+          </button>
+        </div>
       </div>
     );
   }
@@ -259,8 +333,8 @@ export function QuoteForm({ initialCleaningType }: Props) {
   return (
     <form
       ref={formCardRef}
-      id="quote-wizard"
-      data-lead-wizard="quote"
+      id={isQuote ? "quote-wizard" : "book-wizard"}
+      data-lead-wizard={isQuote ? "quote" : "booking"}
       onSubmit={onSubmit}
       onFocus={handleWizardFocusIn}
       className="rounded-[2rem] border border-ink/10 bg-white p-6 shadow-sm sm:p-8 outline-none"
@@ -275,9 +349,8 @@ export function QuoteForm({ initialCleaningType }: Props) {
           {steps.map((step, index) => (
             <span
               key={step.id}
-              className={`h-1.5 w-5 rounded-full sm:w-7 ${
-                index <= stepIndex ? "bg-sun" : "bg-ink/10"
-              }`}
+              className={`h-1.5 w-5 rounded-full sm:w-7 ${index <= stepIndex ? "bg-sun" : "bg-ink/10"
+                }`}
             />
           ))}
         </div>
@@ -667,8 +740,9 @@ export function QuoteForm({ initialCleaningType }: Props) {
         <div aria-live="polite" id={statusId}>
           {stepIndex === lastStep ? (
             <p className="text-xs leading-relaxed text-muted">
-              We&apos;ll review your details and get back to you within 1-2
-              business hours.
+              {isQuote
+                ? "We'll review your details and get back to you within 1-2 business hours."
+                : "Next you'll choose an available cleaning time. We'll confirm your final price before cleaning begins."}
             </p>
           ) : null}
           {submitError ? (
@@ -684,9 +758,13 @@ export function QuoteForm({ initialCleaningType }: Props) {
             className={`${btnPrimary} w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[12rem]`}
           >
             {isSubmitting
-              ? "Sending…"
+              ? isQuote
+                ? "Sending…"
+                : "Loading available times…"
               : stepIndex === lastStep
-                ? "Submit quote request"
+                ? isQuote
+                  ? "Submit quote request"
+                  : "See Available Times →"
                 : "Continue"}
           </button>
           {stepIndex > 0 ? (

@@ -47,6 +47,9 @@ export const TIMING_OPTIONS = [
 
 export const CONTACT_OPTIONS = ["Text", "Phone call", "Email"] as const;
 
+export type CleaningLeadMode = "quote" | "booking";
+export type LeadPath = "Personalized Quote" | "Book Online";
+
 export type CleaningLeadFormState = {
   firstName: string;
   lastName: string;
@@ -109,16 +112,22 @@ export function parseCleaningLeadPayload(
     notes: asText(data.notes, 2000),
   };
 
-  if (Object.keys(validateCleaningLeadForm(form)).length > 0) return null;
+  const leadPath: LeadPath =
+    data.leadPath === "Book Online" ? "Book Online" : "Personalized Quote";
+  const mode: CleaningLeadMode =
+    leadPath === "Book Online" ? "booking" : "quote";
+
+  if (Object.keys(validateCleaningLeadForm(form, mode)).length > 0) return null;
 
   const formLoadedAt =
     typeof data.formLoadedAt === "number" ? data.formLoadedAt : undefined;
 
-  return { ...form, formLoadedAt };
+  return { ...form, formLoadedAt, leadPath };
 }
 
 export type CleaningLeadPayload = CleaningLeadFormState & {
   formLoadedAt?: number;
+  leadPath?: LeadPath;
 };
 
 export type FieldErrors = Partial<Record<keyof CleaningLeadFormState, string>>;
@@ -147,6 +156,7 @@ export function fullNameFromLead(
 
 export function validateCleaningLeadForm(
   form: CleaningLeadFormState,
+  mode: CleaningLeadMode = "quote",
 ): FieldErrors {
   const errors: FieldErrors = {};
   const homeSize = parseHomeSize(form.homeSize);
@@ -159,8 +169,10 @@ export function validateCleaningLeadForm(
     errors.email = "Enter a valid email address.";
   }
 
-  if (!form.contactPreference || !SET.contact.has(form.contactPreference)) {
-    errors.contactPreference = "Choose how you'd like us to contact you.";
+  if (mode === "quote") {
+    if (!form.contactPreference || !SET.contact.has(form.contactPreference)) {
+      errors.contactPreference = "Choose how you'd like us to contact you.";
+    }
   }
 
   if (!form.address.trim()) errors.address = "Enter the service address.";
@@ -181,14 +193,29 @@ export function validateCleaningLeadForm(
     errors.condition = "Select the current condition.";
   }
 
-  if (!form.timing || !SET.timing.has(form.timing)) {
-    errors.timing = "Select a timeframe.";
-  } else if (form.timing === "Specific date" && !form.specificDate.trim()) {
-    errors.specificDate = "Enter the date you're hoping for.";
+  if (mode === "quote") {
+    if (!form.timing || !SET.timing.has(form.timing)) {
+      errors.timing = "Select a timeframe.";
+    } else if (form.timing === "Specific date" && !form.specificDate.trim()) {
+      errors.specificDate = "Enter the date you're hoping for.";
+    }
   }
 
   return errors;
 }
+
+export const BOOKING_FORM_STEPS = [
+  { id: "name", title: "Your name", fields: ["firstName", "lastName"] },
+  { id: "contact", title: "Contact details", fields: ["mobilePhone", "email"] },
+  { id: "address", title: "Service address", fields: ["address"] },
+  { id: "service", title: "Cleaning type", fields: ["cleaningType"] },
+  {
+    id: "home",
+    title: "About your home",
+    fields: ["homeSize", "bedrooms", "bathrooms"],
+  },
+  { id: "condition", title: "Home condition", fields: ["condition"] },
+] as const;
 
 export const QUOTE_FORM_STEPS = [
   { id: "name", title: "Your name", fields: ["firstName", "lastName"] },
@@ -210,13 +237,18 @@ export const QUOTE_FORM_STEPS = [
   { id: "notes", title: "Anything else?", fields: ["notes"] },
 ] as const;
 
+export function getLeadFormSteps(mode: CleaningLeadMode) {
+  return mode === "quote" ? QUOTE_FORM_STEPS : BOOKING_FORM_STEPS;
+}
+
 export function validateCleaningLeadStep(
   form: CleaningLeadFormState,
+  mode: CleaningLeadMode,
   stepIndex: number,
 ): FieldErrors {
-  const step = QUOTE_FORM_STEPS[stepIndex];
+  const step = getLeadFormSteps(mode)[stepIndex];
   if (!step) return {};
-  const all = validateCleaningLeadForm(form);
+  const all = validateCleaningLeadForm(form, mode);
   const errors: FieldErrors = {};
   for (const key of step.fields) {
     const field = key as keyof CleaningLeadFormState;
@@ -227,9 +259,10 @@ export function validateCleaningLeadStep(
 
 export function firstStepErrorField(
   errors: FieldErrors,
+  mode: CleaningLeadMode,
   stepIndex: number,
 ): keyof CleaningLeadFormState | null {
-  const step = QUOTE_FORM_STEPS[stepIndex];
+  const step = getLeadFormSteps(mode)[stepIndex];
   if (!step) return null;
   for (const key of step.fields) {
     const field = key as keyof CleaningLeadFormState;
@@ -261,27 +294,50 @@ export function formatPhoneInput(value: string): string {
 }
 
 export function buildCleaningLeadEmailSubject(
-  data: Pick<CleaningLeadFormState, "firstName" | "lastName" | "cleaningType" | "homeSize">,
+  data: Pick<
+    CleaningLeadPayload,
+    "leadPath" | "firstName" | "lastName" | "cleaningType" | "homeSize"
+  >,
 ): string {
   const size = formatHomeSizeLabel(data.homeSize);
   const name = fullNameFromLead(data) || data.firstName;
+  if (data.leadPath === "Book Online") {
+    return `New online booking lead — ${name} — ${data.cleaningType} — ${size} sq ft`;
+  }
   return `New quote request — ${name} — ${data.cleaningType} — ${size} sq ft`;
 }
 
-export function buildCleaningLeadEmailBody(data: CleaningLeadFormState): string {
+export function buildCleaningLeadEmailBody(
+  data: CleaningLeadPayload,
+  options?: { calendlyUrl?: string },
+): string {
+  const isQuote = data.leadPath !== "Book Online";
+  const header =
+    data.leadPath === "Book Online"
+      ? "NEW ONLINE BOOKING LEAD"
+      : "NEW PERSONALIZED QUOTE REQUEST";
+
   const timingLine =
     data.timing === "Specific date"
       ? `Desired timeframe: Specific date — ${data.specificDate?.trim() || "(not provided)"}`
-      : `Desired timeframe: ${data.timing}`;
+      : data.timing
+        ? `Desired timeframe: ${data.timing}`
+        : null;
 
-  return [
-    "NEW PERSONALIZED QUOTE REQUEST",
+  const lines = [
+    header,
     "",
     "CONTACT",
     `Name: ${fullNameFromLead(data)}`,
     `Phone: ${data.mobilePhone}`,
     `Email: ${data.email}`,
-    `Preferred contact: ${data.contactPreference}`,
+  ];
+
+  if (isQuote && data.contactPreference) {
+    lines.push(`Preferred contact: ${data.contactPreference}`);
+  }
+
+  lines.push(
     `Address: ${data.address.trim()}`,
     "",
     "CLEANING DETAILS",
@@ -290,9 +346,21 @@ export function buildCleaningLeadEmailBody(data: CleaningLeadFormState): string 
     `Bedrooms: ${data.bedrooms}`,
     `Bathrooms: ${data.bathrooms}`,
     `Condition: ${data.condition}`,
-    timingLine,
-    "",
-    "CUSTOMER NOTES",
-    data.notes?.trim() || "(none)",
-  ].join("\n");
+  );
+
+  if (isQuote && timingLine) {
+    lines.push(timingLine);
+  }
+
+  if (isQuote) {
+    lines.push("", "CUSTOMER NOTES", data.notes?.trim() || "(none)");
+  }
+
+  if (options?.calendlyUrl) {
+    lines.push("", "SCHEDULING", `Calendly link: ${options.calendlyUrl}`);
+  }
+
+  lines.push("", `Lead path: ${data.leadPath ?? "Personalized Quote"}`);
+
+  return lines.join("\n");
 }

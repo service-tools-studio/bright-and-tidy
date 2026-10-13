@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import { buildBookingCalendlyUrl } from "@/app/lib/booking-calendly";
 import {
   buildCleaningLeadEmailBody,
   buildCleaningLeadEmailSubject,
@@ -54,6 +55,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
+  const calendlyUrl = buildBookingCalendlyUrl({
+    form: quote,
+    leadPath: quote.leadPath ?? "Personalized Quote",
+  });
+
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 465,
@@ -70,7 +76,7 @@ export async function POST(request: Request) {
       to: site.quoteEmail,
       replyTo: quote.email,
       subject: buildCleaningLeadEmailSubject(quote),
-      text: buildCleaningLeadEmailBody(quote),
+      text: buildCleaningLeadEmailBody(quote, { calendlyUrl }),
     });
   } catch {
     return NextResponse.json(
