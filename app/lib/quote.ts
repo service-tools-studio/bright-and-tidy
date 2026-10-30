@@ -50,6 +50,18 @@ export const CONTACT_OPTIONS = ["Text", "Phone call", "Email"] as const;
 export type CleaningLeadMode = "quote" | "booking";
 export type LeadPath = "Personalized Quote" | "Book Online";
 
+export type CleaningLeadAttribution = {
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_term?: string;
+  utm_content?: string;
+  gclid?: string;
+  gbraid?: string;
+  wbraid?: string;
+  landing_path?: string;
+};
+
 export type CleaningLeadFormState = {
   firstName: string;
   lastName: string;
@@ -89,6 +101,33 @@ function asText(value: unknown, max: number) {
   return value.trim().slice(0, max);
 }
 
+function parseCleaningLeadAttribution(
+  input: unknown,
+): CleaningLeadAttribution | undefined {
+  if (!input || typeof input !== "object") return undefined;
+  const data = input as Record<string, unknown>;
+  const attrs: CleaningLeadAttribution = {};
+
+  const fields: { key: keyof CleaningLeadAttribution; max: number }[] = [
+    { key: "utm_source", max: 120 },
+    { key: "utm_medium", max: 120 },
+    { key: "utm_campaign", max: 160 },
+    { key: "utm_term", max: 160 },
+    { key: "utm_content", max: 500 },
+    { key: "gclid", max: 200 },
+    { key: "gbraid", max: 200 },
+    { key: "wbraid", max: 200 },
+    { key: "landing_path", max: 200 },
+  ];
+
+  for (const { key, max } of fields) {
+    const value = asText(data[key], max);
+    if (value) attrs[key] = value;
+  }
+
+  return Object.keys(attrs).length > 0 ? attrs : undefined;
+}
+
 export function parseCleaningLeadPayload(
   input: unknown,
 ): CleaningLeadPayload | null {
@@ -121,13 +160,15 @@ export function parseCleaningLeadPayload(
 
   const formLoadedAt =
     typeof data.formLoadedAt === "number" ? data.formLoadedAt : undefined;
+  const attribution = parseCleaningLeadAttribution(data.attribution);
 
-  return { ...form, formLoadedAt, leadPath };
+  return { ...form, formLoadedAt, leadPath, attribution };
 }
 
 export type CleaningLeadPayload = CleaningLeadFormState & {
   formLoadedAt?: number;
   leadPath?: LeadPath;
+  attribution?: CleaningLeadAttribution;
 };
 
 export type FieldErrors = Partial<Record<keyof CleaningLeadFormState, string>>;
@@ -307,6 +348,24 @@ export function buildCleaningLeadEmailSubject(
   return `New quote request — ${name} — ${data.cleaningType} — ${size} sq ft`;
 }
 
+function attributionLines(attrs?: CleaningLeadAttribution): string[] {
+  if (!attrs) return [];
+  const rows: [string, string | undefined][] = [
+    ["Source", attrs.utm_source],
+    ["Medium", attrs.utm_medium],
+    ["Campaign", attrs.utm_campaign],
+    ["Term", attrs.utm_term],
+    ["Content", attrs.utm_content],
+    ["Landing page", attrs.landing_path],
+    ["GCLID", attrs.gclid],
+    ["GBRAID", attrs.gbraid],
+    ["WBRAID", attrs.wbraid],
+  ];
+  return rows
+    .filter(([, value]) => Boolean(value?.trim()))
+    .map(([label, value]) => `${label}: ${value!.trim()}`);
+}
+
 export function buildCleaningLeadEmailBody(
   data: CleaningLeadPayload,
   options?: { calendlyUrl?: string },
@@ -360,7 +419,11 @@ export function buildCleaningLeadEmailBody(
     lines.push("", "SCHEDULING", `Calendly link: ${options.calendlyUrl}`);
   }
 
-  lines.push("", `Lead path: ${data.leadPath ?? "Personalized Quote"}`);
+  const attrBody = attributionLines(data.attribution);
+  lines.push("", "ATTRIBUTION", `Lead path: ${data.leadPath ?? "Personalized Quote"}`);
+  if (attrBody.length) {
+    lines.push(...attrBody);
+  }
 
   return lines.join("\n");
 }

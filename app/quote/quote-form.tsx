@@ -11,6 +11,11 @@ import {
   useState,
 } from "react";
 import { buildBookingCalendlyUrl } from "@/app/lib/booking-calendly";
+import { trackQuoteFormConversion } from "@/app/lib/analytics";
+import {
+  getPpcAttribution,
+  leadAttributionFromPpc,
+} from "@/app/lib/ppc-attribution";
 import {
   BATHROOM_OPTIONS,
   BEDROOM_OPTIONS,
@@ -201,9 +206,11 @@ export function QuoteForm({
 
     try {
       const leadPath = isQuote ? "Personalized Quote" : "Book Online";
+      const attribution = leadAttributionFromPpc(getPpcAttribution());
       const calendlyUrl = buildBookingCalendlyUrl({
         form: snapshot,
         leadPath,
+        attribution: attribution ?? null,
       });
       const response = await fetch("/api/quote", {
         method: "POST",
@@ -212,6 +219,7 @@ export function QuoteForm({
           ...snapshot,
           leadPath,
           formLoadedAt: formLoadedAtRef.current,
+          attribution,
         }),
       });
       const data = (await response.json()) as { error?: string };
@@ -221,6 +229,9 @@ export function QuoteForm({
 
       setSubmittedSnapshot(snapshot);
       setSubmitSuccess(true);
+      if (isQuote) {
+        trackQuoteFormConversion(snapshot.cleaningType, attribution);
+      }
       onSuccess?.();
       setForm({
         ...EMPTY_CLEANING_LEAD_FORM,
@@ -256,6 +267,7 @@ export function QuoteForm({
     const url = buildBookingCalendlyUrl({
       form: submittedSnapshot,
       leadPath: isQuote ? "Personalized Quote" : "Book Online",
+      attribution: leadAttributionFromPpc(getPpcAttribution()) ?? null,
     });
     window.open(url, "_blank", "noopener,noreferrer");
   }

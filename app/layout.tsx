@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Allura, Fraunces, Nunito_Sans } from "next/font/google";
 import { CallNowBar } from "@/app/components/call-now-bar";
+import { GoogleAnalytics } from "@/app/components/google-analytics";
+import { PpcAttributionCapture } from "@/app/components/ppc-attribution-capture";
 import { site } from "@/app/lib/site";
 import "./globals.css";
 
@@ -36,6 +38,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${nunito.variable} ${fraunces.variable} ${allura.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans pb-24">
+        <GoogleAnalytics />
+        <PpcAttributionCapture />
         {children}
         <CallNowBar />
       </body>

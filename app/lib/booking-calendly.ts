@@ -1,9 +1,12 @@
 import {
   fullNameFromLead,
+  type CleaningLeadAttribution,
   type CleaningLeadFormState,
   type LeadPath,
 } from "@/app/lib/quote";
 import { site } from "@/app/lib/site";
+
+const CLICK_ID_KEYS = ["gclid", "gbraid", "wbraid"] as const;
 
 function compactCondition(condition: string): string {
   const head = condition.split("—")[0]?.trim();
@@ -22,10 +25,12 @@ export function buildBookingCalendlyUrl({
   form,
   leadPath,
   baseUrl = site.bookingUrl,
+  attribution = null,
 }: {
   form: CleaningLeadFormState;
   leadPath: LeadPath;
   baseUrl?: string;
+  attribution?: CleaningLeadAttribution | null;
 }): string {
   let url: URL;
   try {
@@ -57,13 +62,21 @@ export function buildBookingCalendlyUrl({
   if (squareFootage) params.set("a5", squareFootage);
   if (notes) params.set("a6", notes);
 
+  const attrs =
+    attribution && typeof attribution === "object" ? attribution : {};
+
   const isBooking = leadPath === "Book Online";
-  params.set("utm_source", isBooking ? "book_online" : "request_a_quote");
-  params.set("utm_medium", "website");
+  params.set(
+    "utm_source",
+    attrs.utm_source || (isBooking ? "book_online" : "request_a_quote"),
+  );
+  params.set("utm_medium", attrs.utm_medium || "website");
   params.set(
     "utm_campaign",
-    isBooking ? "online_booking" : "personalized_quote",
+    attrs.utm_campaign ||
+      (isBooking ? "online_booking" : "personalized_quote"),
   );
+  if (attrs.utm_term) params.set("utm_term", attrs.utm_term);
 
   const contentParts = [
     `lead=${isBooking ? "book_online" : "personalized_quote"}`,
@@ -73,11 +86,19 @@ export function buildBookingCalendlyUrl({
     `sf=${squareFootage}`,
     `cond=${compactCondition(form.condition)}`,
     address ? `addr=${compactUtmValue(address)}` : "",
+    attrs.landing_path
+      ? `lp=${attrs.landing_path.replace(/^\//, "")}`
+      : "",
   ]
     .filter(Boolean)
     .join("~");
 
   params.set("utm_content", contentParts);
+
+  for (const key of CLICK_ID_KEYS) {
+    const value = attrs[key];
+    if (value) params.set(key, value);
+  }
 
   return url.toString();
 }

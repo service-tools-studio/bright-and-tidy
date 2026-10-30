@@ -58,6 +58,7 @@ export async function POST(request: Request) {
   const calendlyUrl = buildBookingCalendlyUrl({
     form: quote,
     leadPath: quote.leadPath ?? "Personalized Quote",
+    attribution: quote.attribution ?? null,
   });
 
   const transporter = nodemailer.createTransport({
