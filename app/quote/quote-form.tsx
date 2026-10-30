@@ -51,11 +51,13 @@ const btnSecondary =
 type Props = {
   mode?: CleaningLeadMode;
   initialCleaningType?: string;
+  onSuccess?: () => void;
 };
 
 export function QuoteForm({
   mode = "quote",
   initialCleaningType,
+  onSuccess,
 }: Props) {
   const isQuote = mode === "quote";
   const steps = getLeadFormSteps(mode);
@@ -219,6 +221,7 @@ export function QuoteForm({
 
       setSubmittedSnapshot(snapshot);
       setSubmitSuccess(true);
+      onSuccess?.();
       setForm({
         ...EMPTY_CLEANING_LEAD_FORM,
         ...(initialCleaningType ? { cleaningType: initialCleaningType } : {}),
