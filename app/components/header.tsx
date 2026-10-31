@@ -11,8 +11,8 @@ const links = [
   { href: "/#services", label: "Services" },
   { href: "/#pricing", label: "Pricing" },
   { href: "/#process", label: "Our Process" },
-  { href: "/#about", label: "About" },
-  { href: "/#faq", label: "FAQ" },
+  { href: "/about", label: "About" },
+  { href: "/faq", label: "FAQ" },
   { href: "/quote", label: "Get a Quote" },
   { href: "/book-online", label: "Book Online" },
 ];
