@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { HashLink } from "@/app/components/hash-link";
 import { SparkleIcon } from "@/app/components/icons";
 
 export type FaqItem = {
@@ -17,12 +16,12 @@ export const cleaningFaqs: FaqItem[] = [
       <>
         Every home is a little different, so your price will depend on the size
         of your home, the type of cleaning you need, and its current condition.{" "}
-        <HashLink
-          href="/#pricing"
+        <Link
+          href="/pricing"
           className="font-semibold text-ink underline decoration-sun underline-offset-2 hover:text-ink/80"
         >
           View our pricing
-        </HashLink>{" "}
+        </Link>{" "}
         for starting prices and typical cleaning costs, or{" "}
         <Link
           href="/quote"

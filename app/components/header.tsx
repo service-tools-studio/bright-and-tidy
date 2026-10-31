@@ -9,7 +9,7 @@ import { Logo } from "@/app/components/logo";
 
 const links = [
   { href: "/#services", label: "Services" },
-  { href: "/#pricing", label: "Pricing" },
+  { href: "/pricing", label: "Pricing" },
   { href: "/#process", label: "Our Process" },
   { href: "/about", label: "About" },
   { href: "/faq", label: "FAQ" },
